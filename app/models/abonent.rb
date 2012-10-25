@@ -70,37 +70,15 @@ class Abonent < ActiveRecord::Base
           make_debit
         end
       else
-        make_debit
+        make_debit(false)
       end
     end
-  
-#--------------------- new func -----------------------------------
-# make_debit if !last_debit or 
-#               (last_debit and !last_debit.abonent_tarif.monthly?) or
-#               !abonent_tarif.monthly?
-
-# make_debit if abonent_tarif.monthly? and
-#               last_debit and
-#               last_debit.abonent_tarif.monthly and
-#               last_debit.created_at + 30.day == Date.current
-
   end
 
-
-  def has_enough_balance
-    abonent_pays = abonent_payments.collect{|pay| pay.amount}
-    abonent_debits = abonent_debits.collect{|pay| pay.amount}
-    balance = abonent_pays.sum - abonent_debits.sum
-     
-    balance < abonent_tarif.get_charge
-
-  end
-
-  def make_debit
-    amount = abonent_tarif.get_charge
+  def make_debit(monthly = true)
+    amount = abonent_tarif.tarif
+    amount /= 30 if !monthly
     abonent_debits.create!(:amount => amount, abonent_tarif_id: abonent_tarif.id)
   end
-
-
 
 end
