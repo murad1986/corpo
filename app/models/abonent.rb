@@ -25,7 +25,7 @@ class Abonent < ActiveRecord::Base
   end
 
   def addStartDay
-    self.abonent_saldos.create!(:abonent => self, :start_day => "0")
+    self.abonent_saldos.create!(:abonent => self, :start_day => 0.0)
   end
 
   def chage_status_after_start_day
@@ -43,7 +43,7 @@ class Abonent < ActiveRecord::Base
     if !self.suspend?
       pays = self.abonent_payments.collect{|pay| pay.amount}
       debits = self.abonent_debits.collect{|pay| pay.amount}
-      balance = self.abonent_saldos.last.start_day. + pays.sum - debits.sum
+      balance = self.abonent_saldos.last.start_day + pays.sum - debits.sum
         if self.status == false and self.delay > 0
           self.update_attributes(:status => true)
         elsif self.status == true and self.delay == 0 and balance <= 0
@@ -86,13 +86,17 @@ class Abonent < ActiveRecord::Base
 
   end
 
+  def balance
+
+    pays = self.abonent_payments.where("created_at > ?", Date.today).collect{|pay| pay.amount}
+    debits = self.abonent_debits.where("created_at > ?", Date.today).collect{|pay| pay.amount} 
+    
+    abonent_saldos.last.start_day + pays.sum - debits.sum
+  end
 
   def has_enough_balance
-    abonent_pays = abonent_payments.collect{|pay| pay.amount}
-    abonent_debits = abonent_debits.collect{|pay| pay.amount}
-    balance = abonent_pays.sum - abonent_debits.sum
      
-    balance < abonent_tarif.get_charge
+    self.balance < abonent_tarif.get_charge
 
   end
 
