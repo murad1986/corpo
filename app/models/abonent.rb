@@ -75,9 +75,19 @@ class Abonent < ActiveRecord::Base
     end
   end
 
-  def make_debit(monthly = true)
-    amount = abonent_tarif.tarif
-    amount /= 30 if !monthly
+
+
+  def has_enough_balance
+    pays = abonent_payments.collect{|pay| pay.amount}
+    debits = abonent_debits.collect{|pay| pay.amount}
+    balance = pays.sum - debits.sum
+     
+    balance < abonent_tarif.get_charge
+
+  end
+
+  def make_debit
+    amount = abonent_tarif.get_charge
     abonent_debits.create!(:amount => amount, abonent_tarif_id: abonent_tarif.id)
   end
 
